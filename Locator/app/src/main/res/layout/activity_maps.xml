@@ -19,4 +19,14 @@
         android:layout_centerHorizontal="true"
         android:onClick="onAnimate"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="animate back"
+        android:id="@+id/animate_back"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="onAnimate"
+        />
+
 </RelativeLayout>

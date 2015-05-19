@@ -20,6 +20,10 @@ import static android.location.LocationManager.GPS_PROVIDER;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.Projection;
@@ -27,6 +31,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.plus.model.people.Person;
+
+import java.util.ArrayList;
 
 public class MapsActivity extends FragmentActivity {
 
@@ -34,11 +41,22 @@ public class MapsActivity extends FragmentActivity {
     Marker curMarker;
     public static Location myLocation;
 
+    ArrayList<PersonalLocation> personalLocations;
+
+    Firebase myFirebaseRef;
+
+    public double longitude = 0;
+    public double latitude = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
+
+        personalLocations = new ArrayList<PersonalLocation>();
+
+         myFirebaseRef = new Firebase("https://intense-inferno-6530.firebaseio.com/");
 
     }
 
@@ -49,6 +67,13 @@ public class MapsActivity extends FragmentActivity {
 
     }
 
+
+    /**
+     *  Goes through the different providers to get the current location
+     *  If the 'best' location is null it will look for the last known location
+     * @param context
+     * @return Location - gives a Location object
+     */
     public static Location getLatestLocation(final Context context) {
         LocationManager manager = (LocationManager) context
                 .getSystemService(LOCATION_SERVICE);
@@ -68,9 +93,15 @@ public class MapsActivity extends FragmentActivity {
                 manager.getLastKnownLocation(PASSIVE_PROVIDER));
         return latestLocation;
 
+
     }
 
-
+    /**
+     * Looks at the two locations and determines which one is more recent
+     * @param location1 -
+     * @param location2
+     * @return
+     */
     private static Location getLatest(final Location location1,
                                       final Location location2) {
         if (location1 == null)
@@ -205,6 +236,9 @@ public class MapsActivity extends FragmentActivity {
         });
     }
 
+
+
+
     public void onAnimate(View v){
         switch(v.getId()){
             case R.id.animate_button:
@@ -212,6 +246,47 @@ public class MapsActivity extends FragmentActivity {
                 //Marker ad = mMap.addMarker(new MarkerOptions().position(a).title("updated!").snippet("Consider yourself located"));
 
                 animateMarker(curMarker, new LatLng(myLocation.getLatitude() + 0.5, myLocation.getLongitude() + 0.5), false);
+                //myFirebaseRef.child("Latitude").setValue(myLocation.getLatitude() + 0.5);
+                //myFirebaseRef.child("Longitude").setValue(myLocation.getLongitude() + 0.5);
+
+
+
+
+
+
+                myFirebaseRef.child("Longitude").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        longitude = (Double) snapshot.getValue();
+                    }
+                    @Override public void onCancelled(FirebaseError error) {
+
+                    }
+                });
+
+                myFirebaseRef.child("Latitude").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        latitude = (Double) snapshot.getValue();
+                    }
+                    @Override public void onCancelled(FirebaseError error) {
+
+                    }
+                });
+
+
+                animateMarker(curMarker, new LatLng(latitude, longitude), false);
+
+
+                break;
+
+            case R.id.animate_back:
+                animateMarker(curMarker, new LatLng(myLocation.getLatitude(), myLocation.getLongitude()), false);
+               // myFirebaseRef.child("Latitude").setValue(myLocation.getLatitude() + 0.5);
+               // myFirebaseRef.child("Longitude").setValue(myLocation.getLongitude() + 0.5);
+
+                break;
+
         }
 
 
