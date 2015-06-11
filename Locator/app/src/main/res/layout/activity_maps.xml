@@ -24,9 +24,29 @@
         android:layout_height="wrap_content"
         android:text="animate back"
         android:id="@+id/animate_back"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:onClick="onAnimate"
+        android:layout_below="@+id/editUser_ET"
         />
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Username"
+        android:ems="10"
+        android:id="@+id/editUser_ET"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Confirm"
+        android:id="@+id/confirm_buttonB"
+        android:layout_alignBottom="@+id/editName_ET"
+        android:layout_toRightOf="@+id/editName_ET"
+        android:onClick="onAnimate"/>
 
 </RelativeLayout>

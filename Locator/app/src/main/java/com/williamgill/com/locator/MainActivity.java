@@ -3,6 +3,8 @@ package com.williamgill.com.locator;
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -15,9 +17,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
+import android.widget.EditText;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.firebase.client.Firebase;
+
+/**
+ * William Gill
+ * ICS4U-1
+ * Locator
+ * 6/09/2015
+ */
+
 
 
 public class MainActivity extends ActionBarActivity
@@ -33,6 +45,8 @@ public class MainActivity extends ActionBarActivity
      */
     private CharSequence mTitle;
 
+    public static final String PREFS_NAME = "MyPrefsFile";
+
 
 
     @Override
@@ -47,14 +61,15 @@ public class MainActivity extends ActionBarActivity
 
 
 
+
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
 
         // Set up the drawer.
-        mNavigationDrawerFragment.setUp(
-                R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
+//        mNavigationDrawerFragment.setUp(
+//                R.id.navigation_drawer,
+//                (DrawerLayout) findViewById(R.id.drawer_layout));
     }
 
     @Override
@@ -88,20 +103,9 @@ public class MainActivity extends ActionBarActivity
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        if (!mNavigationDrawerFragment.isDrawerOpen()) {
-            // Only show items in the action bar relevant to this screen
-            // if the drawer is not showing. Otherwise, let the drawer
-            // decide what to show in the action bar.
-            getMenuInflater().inflate(R.menu.main, menu);
-            restoreActionBar();
-            return true;
-        }
-        return super.onCreateOptionsMenu(menu);
-    }
 
-    @Override
+
+
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -121,11 +125,15 @@ public class MainActivity extends ActionBarActivity
     /**
      * A placeholder fragment containing a simple view.
      */
+    public static ToggleButton sendData;
+    public static EditText nameSpace;
     public static class HomeFragment extends Fragment {
         /**
          * The fragment argument representing the section number for this
          * fragment.
          */
+
+
         private static final String ARG_SECTION_NUMBER = "section_number";
 
         /**
@@ -147,6 +155,14 @@ public class MainActivity extends ActionBarActivity
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            //initializing XML objects
+            nameSpace = (EditText) rootView.findViewById(R.id.editName_ET);
+            sendData = (ToggleButton) rootView.findViewById(R.id.toggleButton);
+
+
+
+
             return rootView;
         }
 
@@ -157,6 +173,14 @@ public class MainActivity extends ActionBarActivity
                     getArguments().getInt(ARG_SECTION_NUMBER));
         }
     }
+
+
+    /**
+     * a method that handles all of the buttons on the mainActivity
+     * temp_button is for opening up the Map Activity
+     * confirm_button is for confirming the username
+     * @param v
+     */
     public void onClickMap(View v) {
         switch (v.getId()) {
             case R.id.temp_button:
@@ -166,6 +190,25 @@ public class MainActivity extends ActionBarActivity
                 myIntent = new Intent(this, MapsActivity.class);
                 startActivity(myIntent);
                 break;
+
+            case R.id.confirm_button:
+                nameSpace.setEnabled(false);
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                if(preferences.getString("isFirstTime", "true").equals("true")){
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putString("isFirstTime","false");
+                    editor.apply();
+                }
+                String name = nameSpace.getText().toString();
+                SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString("Name", name);
+
+                // Commit the edits!
+                editor.commit();
+
+               break;
+
 
         }
     }

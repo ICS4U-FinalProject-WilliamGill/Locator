@@ -2,17 +2,22 @@ package com.williamgill.com.locator;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import static android.content.Context.LOCATION_SERVICE;
 import static android.location.Criteria.ACCURACY_FINE;
@@ -34,12 +39,26 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.plus.model.people.Person;
 
 import java.util.ArrayList;
+/**
+ * William Gill
+ * ICS4U-1
+ * Locator
+ * 6/09/2015
+ */
 
 public class MapsActivity extends FragmentActivity {
+
+    public static EditText userSpace;
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     Marker curMarker;
     public static Location myLocation;
+    Firebase userRef;
+    public String lookFor = "";
+
+   public boolean check = true;
+
+
 
     ArrayList<PersonalLocation> personalLocations;
 
@@ -54,9 +73,10 @@ public class MapsActivity extends FragmentActivity {
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
 
-        personalLocations = new ArrayList<PersonalLocation>();
+        userSpace = (EditText) findViewById(R.id.editUser_ET);
 
          myFirebaseRef = new Firebase("https://intense-inferno-6530.firebaseio.com/");
+        userRef = myFirebaseRef.child("Users");
 
     }
 
@@ -100,7 +120,7 @@ public class MapsActivity extends FragmentActivity {
      * Looks at the two locations and determines which one is more recent
      * @param location1 -
      * @param location2
-     * @return
+     * @return - the more recent location
      */
     private static Location getLatest(final Location location1,
                                       final Location location2) {
@@ -199,6 +219,15 @@ public class MapsActivity extends FragmentActivity {
 
     }
 
+    /**
+     * Animate Marker
+     * Allows the marker to move to a desired location
+     * credit to http://stackoverflow.com/questions/13872803/how-to-animate-marker-in-android-map-api-v2
+     * @param marker
+     * @param toPosition
+     * @param hideMarker
+     */
+
     public void animateMarker(final Marker marker, final LatLng toPosition,
                               final boolean hideMarker) {
         final Handler handler = new Handler();
@@ -236,8 +265,60 @@ public class MapsActivity extends FragmentActivity {
         });
     }
 
+    /**
+     * Updates the latitude and longitude from the Firebase database
+     */
+    public void updateData(){
 
 
+
+        userRef.child(lookFor).child("Longitude").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+
+                if(snapshot.getValue() == null) {
+                    Toast.makeText(getApplicationContext(), "User does not exist!",
+                            Toast.LENGTH_LONG).show();
+                    check = false;
+
+                }
+                else {
+
+                    longitude = (Double) snapshot.getValue();
+                }
+            }
+            @Override public void onCancelled(FirebaseError error) {
+
+            }
+        });
+
+        userRef.child(lookFor).child("Latitude").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if(check) {
+                    latitude = (Double) snapshot.getValue();
+                }
+
+
+
+            }
+            @Override public void onCancelled(FirebaseError error) {
+
+            }
+        });
+
+
+
+    }
+
+
+    /**
+     * Method that controls the buttons on the MapsActivity
+     * animate_button - controls when to move the markers
+     * animate_back - move the marker back to the current users location
+     * confirm_buttonB - locks in the users decision of a usernames
+     * @param v
+     */
 
     public void onAnimate(View v){
         switch(v.getId()){
@@ -245,37 +326,30 @@ public class MapsActivity extends FragmentActivity {
                 //LatLng a = new LatLng(myLocation.getLatitude()+0.5, myLocation.getLongitude() +0.5);
                 //Marker ad = mMap.addMarker(new MarkerOptions().position(a).title("updated!").snippet("Consider yourself located"));
 
-                animateMarker(curMarker, new LatLng(myLocation.getLatitude() + 0.5, myLocation.getLongitude() + 0.5), false);
-                //myFirebaseRef.child("Latitude").setValue(myLocation.getLatitude() + 0.5);
-                //myFirebaseRef.child("Longitude").setValue(myLocation.getLongitude() + 0.5);
+                //animateMarker(curMarker, new LatLng(myLocation.getLatitude() + 0.5, myLocation.getLongitude() + 0.5), false);
+
+                updateData();
 
 
 
 
+                SharedPreferences settings = getSharedPreferences(MainActivity.PREFS_NAME, 0);
+                String name = settings.getString("Name", "DEFAULT");
+
+                if(MainActivity.sendData.isChecked()) {
+                    userRef.child(name).setValue(name);
+                    userRef.child(name).child("Longitude").setValue(myLocation.getLongitude() + 0.5);
+                    userRef.child(name).child("Latitude").setValue(myLocation.getLatitude() + 0.5);
+                }
 
 
-                myFirebaseRef.child("Longitude").addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot snapshot) {
-                        longitude = (Double) snapshot.getValue();
-                    }
-                    @Override public void onCancelled(FirebaseError error) {
-
-                    }
-                });
-
-                myFirebaseRef.child("Latitude").addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot snapshot) {
-                        latitude = (Double) snapshot.getValue();
-                    }
-                    @Override public void onCancelled(FirebaseError error) {
-
-                    }
-                });
 
 
-                animateMarker(curMarker, new LatLng(latitude, longitude), false);
+                if(check) {
+                    animateMarker(curMarker, new LatLng(latitude, longitude), false);
+                }
+
+                    userSpace.setEnabled(true);
 
 
                 break;
@@ -285,6 +359,11 @@ public class MapsActivity extends FragmentActivity {
                // myFirebaseRef.child("Latitude").setValue(myLocation.getLatitude() + 0.5);
                // myFirebaseRef.child("Longitude").setValue(myLocation.getLongitude() + 0.5);
 
+                break;
+
+            case R.id.confirm_buttonB:
+                userSpace.setEnabled(false);
+                    lookFor = userSpace.getText().toString();
                 break;
 
         }
