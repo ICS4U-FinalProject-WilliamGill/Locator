@@ -47,7 +47,7 @@ public class MainActivity extends ActionBarActivity
 
     public static final String PREFS_NAME = "MyPrefsFile";
 
-
+    int abcd = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
